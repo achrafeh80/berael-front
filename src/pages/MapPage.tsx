@@ -1,83 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-} from '@ionic/react';
-import { refresh } from 'ionicons/icons';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { getStories, Story } from '../services/storage';
-import { Geolocation } from '@capacitor/geolocation';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useRef } from 'react';
+import { IonPage, IonContent, useIonViewDidEnter } from '@ionic/react';
+import Header from '../components/Header';
+import DataService from '../services/DataService';
+import * as L from 'leaflet';
 
-import './MapPage.css'; // <- Ajoutez ce fichier
+const userIcon = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+const friendIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
 
 const MapPage: React.FC = () => {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [position, setPosition] = useState<[number, number] | null>(null);
+  const user = DataService.getCurrentUser();
+  const mapRef = useRef<L.Map | null>(null);
 
-  const load = async () => {
-    setStories(await getStories());
-    const coordinates = await Geolocation.getCurrentPosition();
-    setPosition([coordinates.coords.latitude, coordinates.coords.longitude]);
+  const init = () => {
+    if (!mapRef.current) {
+      mapRef.current = L.map('map', { zoomControl: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+      }).addTo(mapRef.current);
+    }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  const refresh = () => {
+    if (!mapRef.current || !user) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude } = pos.coords;
+      DataService.updateUserLocation(user.username, latitude, longitude);
+      const all = DataService.getUsers();
+
+      mapRef.current!.eachLayer(l => {
+        if ((l as any)._latlng) mapRef.current!.removeLayer(l);
+      });
+
+      L.marker([latitude, longitude], { icon: userIcon })
+        .addTo(mapRef.current!)
+        .bindPopup('<b>Moi</b>')
+        .openPopup();
+
+      user.friends.forEach(f => {
+        const friend = all.find(u => u.username === f && u.location);
+        if (friend?.location)
+          L.marker([friend.location.lat, friend.location.lng], { icon: friendIcon })
+            .addTo(mapRef.current!)
+            .bindPopup(friend.username);
+      });
+
+      mapRef.current!.setView([latitude, longitude], 14);
+    });
+  };
+
+  useIonViewDidEnter(() => {
+    init();
+    refresh();
+  });
+
+  if (!user) return null;
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Carte</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen className="map-content">
-        {position && (
-          <div className="map-wrapper">
-            <MapContainer center={position} zoom={13} className="styled-map">
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="© OpenStreetMap"
-              />
-              {stories.map((story) => (
-                <Marker key={story.id} position={[story.lat, story.lng]} icon={new L.Icon.Default()}>
-                  <Popup className="custom-popup">
-                    {story.img && (
-                      <img src={story.img} alt="Story" className="popup-image" />
-                    )}
-                    <br />
-                    <span>{story.content}</span>
-                  </Popup>
-                </Marker>
-              ))}
-              <Marker
-                position={position}
-                icon={new L.Icon({
-                  iconUrl: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/images/marker-icon.png',
-                  shadowUrl: '',
-                })}
-              >
-                <Popup>Vous êtes ici</Popup>
-              </Marker>
-            </MapContainer>
-            <IonFab vertical="bottom" horizontal="end" slot="fixed">
-              <IonFabButton onClick={load}>
-                <IonIcon icon={refresh} />
-              </IonFabButton>
-            </IonFab>
-          </div>
-        )}
+      <Header title="Carte" />
+      <IonContent>
+        <div id="map" style={{ height: '100%' }} />
       </IonContent>
     </IonPage>
   );
 };
-
 export default MapPage;

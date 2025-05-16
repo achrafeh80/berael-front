@@ -1,80 +1,37 @@
-import React from 'react';
-import {
-  IonApp,
-  IonTabs,
-  IonTabBar,
-  IonTabButton,
-  IonIcon,
-  IonLabel,
-  IonRouterOutlet,
-} from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { people, chatbox, map } from 'ionicons/icons';
 import { Redirect, Route } from 'react-router-dom';
+import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
+import { IonReactRouter } from '@ionic/react-router';
+import MainTabs from './pages/MainTabs';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import AdminPage from './pages/AdminPage';
+import DataService from './services/DataService';
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Users from './pages/Users';
-import Chat from './pages/Chat';
-import MapPage from './pages/MapPage';
+setupIonicReact();
 
-import { AuthProvider, useAuth } from './context/AuthContext';
+const App: React.FC = () => {
+  // Initialize local storage data (users, default admin si nécessaire)
+  DataService.initData();
+  const currentUser = DataService.getCurrentUser();
 
-const PrivateRoute: React.FC<{ component: React.FC; path: string; exact?: boolean }> = ({ component: Component, ...rest }) => {
-  const { user } = useAuth();
   return (
-    <Route
-      {...rest}
-      render={(props) =>
-        user ? (
-          // @ts-ignore
-          <Component {...props} />
-        ) : (
-          <Redirect to="/login" />
-        )
-      }
-    />
-  );
-};
-
-const Tabs: React.FC = () => (
-  <IonTabs>
-    <IonRouterOutlet>
-      <Route path="/tabs/users" component={Users} exact />
-      <Route path="/tabs/chat/:id" component={Chat} exact />
-      <Route path="/tabs/map" component={MapPage} exact />
-      <Redirect exact from="/tabs" to="/tabs/users" />
-    </IonRouterOutlet>
-    <IonTabBar slot="bottom">
-      <IonTabButton tab="users" href="/tabs/users">
-        <IonIcon icon={people} />
-        <IonLabel>Utilisateurs</IonLabel>
-      </IonTabButton>
-      <IonTabButton tab="chat" href="/tabs/chat/me">
-        <IonIcon icon={chatbox} />
-        <IonLabel>Chat</IonLabel>
-      </IonTabButton>
-      <IonTabButton tab="map" href="/tabs/map">
-        <IonIcon icon={map} />
-        <IonLabel>Carte</IonLabel>
-      </IonTabButton>
-    </IonTabBar>
-  </IonTabs>
-);
-
-const App: React.FC = () => (
-  <IonApp>
-    <AuthProvider>
+    <IonApp>
       <IonReactRouter>
-        <IonRouterOutlet>
-          <Route path="/login" component={Login} exact />
-          <Route path="/register" component={Register} exact />
-          <PrivateRoute path="/tabs" component={Tabs} />
-          <Redirect exact from="/" to="/login" />
+        <IonRouterOutlet id="main">
+          <Route path="/login" component={LoginPage} exact />
+          <Route path="/register" component={RegisterPage} exact />
+          {/* Route protégée pour l'admin */}
+          <Route path="/admin" component={AdminPage} />
+          {/* Routes principales avec onglets */}
+          <Route path="/app" component={MainTabs} />
+          {/* Route par défaut : redirige selon l'état de connexion */}
+          <Route exact path="/" render={() =>
+            currentUser ? <Redirect to="/app" /> : <Redirect to="/login" />
+          } />
         </IonRouterOutlet>
       </IonReactRouter>
-    </AuthProvider>
-  </IonApp>
-);
+    </IonApp>
+  );
+};
 
 export default App;
