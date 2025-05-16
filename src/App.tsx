@@ -1,52 +1,79 @@
-import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
+import React from 'react';
+import {
+  IonApp,
+  IonTabs,
+  IonTabBar,
+  IonTabButton,
+  IonIcon,
+  IonLabel,
+  IonRouterOutlet,
+} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import Home from './pages/Home';
+import { people, chatbox, map } from 'ionicons/icons';
+import { Redirect, Route } from 'react-router-dom';
 
-/* Core CSS required for Ionic components to work properly */
-import '@ionic/react/css/core.css';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Users from './pages/Users';
+import Chat from './pages/Chat';
+import MapPage from './pages/MapPage';
 
-/* Basic CSS for apps built with Ionic */
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-/* Optional CSS utils that can be commented out */
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+const PrivateRoute: React.FC<{ component: React.FC; path: string; exact?: boolean }> = ({ component: Component, ...rest }) => {
+  const { user } = useAuth();
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        user ? (
+          // @ts-ignore
+          <Component {...props} />
+        ) : (
+          <Redirect to="/login" />
+        )
+      }
+    />
+  );
+};
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
-
-/* Theme variables */
-import './theme/variables.css';
-
-setupIonicReact();
+const Tabs: React.FC = () => (
+  <IonTabs>
+    <IonRouterOutlet>
+      <Route path="/tabs/users" component={Users} exact />
+      <Route path="/tabs/chat/:id" component={Chat} exact />
+      <Route path="/tabs/map" component={MapPage} exact />
+      <Redirect exact from="/tabs" to="/tabs/users" />
+    </IonRouterOutlet>
+    <IonTabBar slot="bottom">
+      <IonTabButton tab="users" href="/tabs/users">
+        <IonIcon icon={people} />
+        <IonLabel>Utilisateurs</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="chat" href="/tabs/chat/me">
+        <IonIcon icon={chatbox} />
+        <IonLabel>Chat</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="map" href="/tabs/map">
+        <IonIcon icon={map} />
+        <IonLabel>Carte</IonLabel>
+      </IonTabButton>
+    </IonTabBar>
+  </IonTabs>
+);
 
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
+    <AuthProvider>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <Route path="/login" component={Login} exact />
+          <Route path="/register" component={Register} exact />
+          <PrivateRoute path="/tabs" component={Tabs} />
+          <Redirect exact from="/" to="/login" />
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </AuthProvider>
   </IonApp>
 );
 

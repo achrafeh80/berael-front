@@ -1,0 +1,29 @@
+.map-content {
+  position: relative;
+  --background: #f9f9f9;
+}
+
+.map-wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.styled-map {
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.custom-popup {
+  font-size: 14px;
+  max-width: 200px;
+}
+
+.popup-image {
+  max-width: 180px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
