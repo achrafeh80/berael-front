@@ -98,7 +98,7 @@ Gestion des notifications locales quotidiennes.
 
 ### Home (Feed)
 
-Affiche les publications des utilisateurs suivis. Permet de prendre des photos et de voir le contenu des autres.
+Affiche un message de bienvenue
 
 ### Search
 
@@ -123,6 +123,7 @@ Paramètres de l'application et notifications.
 - Node.js 14+
 - NPM ou Yarn
 - Ionic CLI (`npm install -g @ionic/cli`)
+- compte firebase
 
 ### Installation
 
@@ -133,6 +134,18 @@ cd beunreal
 
 # Installer les dépendances
 npm install
+
+#Créer un fichier .env dans lequel vous mettrez vos clefs firebase ex:
+```sh
+VITE_FIREBASE_API_KEY=VOTRE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN=VOTRE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID=VOTRE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET=VOTRE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID=VOTRE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID=VOTRE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID=VOTRE_MEASUREMENT_ID
+VITE_FIREBASE_DATABASE_URL=VOTRE_DATABASE_URL
+```
 
 # Démarrer en mode développement
 ionic serve
